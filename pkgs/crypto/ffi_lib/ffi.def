@@ -1,0 +1,4 @@
+LIBRARY   ffi
+EXPORTS
+   hello_world
+   md5String

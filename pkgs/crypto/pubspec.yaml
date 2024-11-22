@@ -13,6 +13,7 @@ environment:
 
 dependencies:
   typed_data: ^1.3.0
+  ffi: any
 
 dev_dependencies:
   convert: ^3.0.0
