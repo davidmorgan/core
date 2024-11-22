@@ -18,4 +18,11 @@ dependencies:
 dev_dependencies:
   convert: ^3.0.0
   dart_flutter_team_lints: ^3.0.0
+  ffigen: any
   test: ^1.16.6
+
+ffigen:
+  output: 'example/generated_bindings.dart'
+  headers:
+    entry-points:
+      - ffi_lib/blake3.h

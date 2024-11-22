@@ -11,21 +11,12 @@ import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
 import 'package:ffi/ffi.dart';
 
-typedef HashFunc =
-    ffi.Void Function(
-      ffi.Pointer<Utf8> data,
-      ffi.Int32 length,
-      ffi.Pointer<ffi.Uint8> output,
-    );
-typedef Hash =
-    void Function(
-      ffi.Pointer<Utf8> data,
-      int length,
-      ffi.Pointer<ffi.Uint8> output,
-    );
+import 'generated_bindings.dart';
 
 Future<void> main(List<String> args) async {
-  var libraryPath = '${Directory.current.path}/ffi_lib/libffi.so';
+  var libraryPath = '${Directory.current.path}/ffi_lib/libblake3.so';
+  final dylib = ffi.DynamicLibrary.open(libraryPath);
+  final nativeLibrary = NativeLibrary(dylib);
 
   final size = 2000;
   final times = 10000;
@@ -41,19 +32,19 @@ Future<void> main(List<String> args) async {
     buffer2[i] = i & 0xff;
   }
 
+  final hasher = malloc<blake3_hasher>();
   {
-    final dylib = ffi.DynamicLibrary.open(libraryPath);
-    final Hash hash =
-        dylib.lookup<ffi.NativeFunction<HashFunc>>('md5String2').asFunction();
-
-    final output = malloc<ffi.Uint8>(16);
+    final output = malloc<ffi.Uint8>(32);
     for (var i = 0; i != iterations; ++i) {
       final stopwatch = Stopwatch()..start();
       for (var i = 0; i != times; ++i) {
-        hash(buffer2.cast(), size, output);
+        nativeLibrary.blake3_hasher_init(hasher);
+        nativeLibrary.blake3_hasher_update(hasher, buffer2.cast(), size);
+        nativeLibrary.blake3_hasher_finalize(hasher, output, 32);
+        nativeLibrary.blake3_hasher_reset(hasher);
       }
-      print(' FFI: ${stopwatch.elapsed.inMilliseconds}ms');
-      print(hex.encode(output.asTypedList(16)));
+      print(' blake3: ${stopwatch.elapsed.inMilliseconds}ms');
+      print(hex.encode(output.asTypedList(32)));
     }
   }
 
